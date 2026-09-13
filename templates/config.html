@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration - AI Code Review Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Code Review Bot</h1>
+            <p class="subtitle">Configuration</p>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/config" class="active">Configuration</a>
+                <a href="/api/health" target="_blank">Health</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="config-section">
+                <h2>⚙️ Current Configuration</h2>
+                
+                <div class="config-card">
+                    <h3>🔐 GitHub Configuration</h3>
+                    <div class="config-item">
+                        <span class="config-label">GitHub Token:</span>
+                        <span class="config-value">{{ '✅ Configured' if config.GITHUB_TOKEN else '❌ Not Configured' }}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Webhook Secret:</span>
+                        <span class="config-value">{{ '✅ Configured' if config.GITHUB_WEBHOOK_SECRET else '❌ Not Configured' }}</span>
+                    </div>
+                </div>
+
+                <div class="config-card">
+                    <h3>🤖 AI Provider Configuration</h3>
+                    <div class="config-item">
+                        <span class="config-label">Provider:</span>
+                        <span class="config-value">{{ config.AI_PROVIDER }}</span>
+                    </div>
+                    
+                    {% if config.AI_PROVIDER == 'openai' %}
+                    <div class="config-item">
+                        <span class="config-label">OpenAI API Key:</span>
+                        <span class="config-value">{{ '✅ Configured' if config.OPENAI_API_KEY else '❌ Not Configured' }}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Model:</span>
+                        <span class="config-value">{{ config.OPENAI_MODEL }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if config.AI_PROVIDER == 'anthropic' %}
+                    <div class="config-item">
+                        <span class="config-label">Anthropic API Key:</span>
+                        <span class="config-value">{{ '✅ Configured' if config.ANTHROPIC_API_KEY else '❌ Not Configured' }}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Model:</span>
+                        <span class="config-value">{{ config.ANTHROPIC_MODEL }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if config.AI_PROVIDER == 'custom' %}
+                    <div class="config-item">
+                        <span class="config-label">Endpoint:</span>
+                        <span class="config-value">{{ config.CUSTOM_AI_ENDPOINT or 'Not Configured' }}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">API Key:</span>
+                        <span class="config-value">{{ '✅ Configured' if config.CUSTOM_AI_API_KEY else '❌ Not Configured' }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="config-card">
+                    <h3>📊 Review Settings</h3>
+                    <div class="config-item">
+                        <span class="config-label">Max Files to Analyze:</span>
+                        <span class="config-value">{{ config.MAX_FILES_TO_ANALYZE }}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Max Diff Size:</span>
+                        <span class="config-value">{{ config.MAX_DIFF_SIZE }} characters</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Pattern Analysis Depth:</span>
+                        <span class="config-value">{{ config.PATTERN_ANALYSIS_DEPTH }} files</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="setup-section">
+                <h2>🚀 Setup Instructions</h2>
+                
+                <div class="setup-card">
+                    <h3>1. Create GitHub Personal Access Token</h3>
+                    <ol>
+                        <li>Go to GitHub Settings → Developer settings → Personal access tokens</li>
+                        <li>Click "Generate new token (classic)"</li>
+                        <li>Select scopes: <code>repo</code> (Full control of private repositories)</li>
+                        <li>Copy the token and add to <code>.env</code> file</li>
+                    </ol>
+                </div>
+
+                <div class="setup-card">
+                    <h3>2. Configure Webhook</h3>
+                    <ol>
+                        <li>Go to your repository → Settings → Webhooks</li>
+                        <li>Click "Add webhook"</li>
+                        <li>Payload URL: <code>https://your-domain.com/webhook</code></li>
+                        <li>Content type: <code>application/json</code></li>
+                        <li>Secret: Generate a random string and add to <code>.env</code></li>
+                        <li>Events: Select "Pull requests"</li>
+                        <li>Active: ✅</li>
+                    </ol>
+                </div>
+
+                <div class="setup-card">
+                    <h3>3. Configure AI Provider</h3>
+                    <p><strong>OpenAI:</strong></p>
+                    <pre>AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your-key-here
+OPENAI_MODEL=gpt-4</pre>
+                    
+                    <p><strong>Anthropic:</strong></p>
+                    <pre>AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022</pre>
+                    
+                    <p><strong>Custom (OpenAI-compatible):</strong></p>
+                    <pre>AI_PROVIDER=custom
+CUSTOM_AI_ENDPOINT=https://your-endpoint.com/v1/chat/completions
+CUSTOM_AI_API_KEY=your-key-here
+CUSTOM_AI_MODEL=your-model-name</pre>
+                </div>
+
+                <div class="setup-card">
+                    <h3>4. Environment Variables</h3>
+                    <p>Copy <code>.env.example</code> to <code>.env</code> and configure:</p>
+                    <pre>cp .env.example .env
+nano .env</pre>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>AI Code Review Bot | Open Source | BYOK (Bring Your Own Key)</p>
+        </footer>
+    </div>
+</body>
+</html>

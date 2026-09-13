@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review Bot - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Code Review Bot</h1>
+            <p class="subtitle">Simplify your code with AI-powered reviews</p>
+            <nav>
+                <a href="/" class="active">Dashboard</a>
+                <a href="/config">Configuration</a>
+                <a href="/api/health" target="_blank">Health</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="stats">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Reviews</div>
+                        <div class="stat-value">{{ reviews|length }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-content">
+                        <div class="stat-label">AI Provider</div>
+                        <div class="stat-value">{{ config.AI_PROVIDER }}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value">Active</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="manual-review">
+                <h2>🎯 Manual Review</h2>
+                <div class="form-card">
+                    <form id="reviewForm">
+                        <div class="form-group">
+                            <label for="repo">Repository (owner/repo):</label>
+                            <input type="text" id="repo" name="repo" placeholder="e.g., facebook/react" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pr_number">Pull Request Number:</label>
+                            <input type="number" id="pr_number" name="pr_number" placeholder="e.g., 123" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Start Review</button>
+                    </form>
+                    <div id="reviewMessage" class="message"></div>
+                </div>
+            </section>
+
+            <section class="analyze-repo">
+                <h2>📚 Analyze Repository Patterns</h2>
+                <div class="form-card">
+                    <form id="analyzeForm">
+                        <div class="form-group">
+                            <label for="analyze_repo">Repository (owner/repo):</label>
+                            <input type="text" id="analyze_repo" name="repo" placeholder="e.g., facebook/react" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Analyze Patterns</button>
+                    </form>
+                    <div id="analyzeMessage" class="message"></div>
+                </div>
+            </section>
+
+            <section class="recent-reviews">
+                <h2>📝 Recent Reviews</h2>
+                {% if reviews %}
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <h3>{{ review.repo_full_name }} #{{ review.pr_number }}</h3>
+                                <span class="review-status">{{ review.status }}</span>
+                            </div>
+                            <div class="review-details">
+                                <div class="review-stat">
+                                    <span class="label">Files:</span>
+                                    <span class="value">{{ review.review_data.files_reviewed or 0 }}</span>
+                                </div>
+                                <div class="review-stat">
+                                    <span class="label">Changes:</span>
+                                    <span class="value">{{ review.review_data.changes_analyzed or 0 }}</span>
+                                </div>
+                                <div class="review-stat">
+                                    <span class="label">Posted:</span>
+                                    <span class="value">{{ '✅' if review.review_data.posted else '❌' }}</span>
+                                </div>
+                            </div>
+                            <div class="review-time">{{ review.created_at }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No reviews yet. Trigger your first review above!</p>
+                    </div>
+                {% endif %}
+            </section>
+        </main>
+
+        <footer>
+            <p>AI Code Review Bot | Open Source | BYOK (Bring Your Own Key)</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
