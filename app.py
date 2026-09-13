@@ -7,13 +7,13 @@ import os
 # Add src directory to Python path for kiss package imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from kiss.config import Config
-from kiss.database import Database
-from kiss.github_client import GitHubClient
-from kiss.diff_parser import DiffParser
-from kiss.pattern_analyzer import PatternAnalyzer
-from kiss.ai_engine import AIEngine
-from kiss.utils import require_github_signature, format_error_response, format_success_response, validate_pr_number, validate_repo_name
+from stinker.config import Config
+from stinker.database import Database
+from stinker.github_client import GitHubClient
+from stinker.diff_parser import DiffParser
+from stinker.pattern_analyzer import PatternAnalyzer
+from stinker.ai_engine import AIEngine
+from stinker.utils import require_github_signature, format_error_response, format_success_response, validate_pr_number, validate_repo_name
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = Config.SECRET_KEY

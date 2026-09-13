@@ -1,6 +1,6 @@
 import json
 import requests
-from kiss.config import Config
+from stinker.config import Config
 
 class AIEngine:
     """

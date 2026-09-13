@@ -1,5 +1,5 @@
 from github import Github, GithubException
-from kiss.config import Config
+from stinker.config import Config
 import base64
 
 class GitHubClient:

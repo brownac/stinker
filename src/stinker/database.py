@@ -1,7 +1,7 @@
 import sqlite3
 import json
 from datetime import datetime
-from kiss.config import Config
+from stinker.config import Config
 
 class Database:
     """SQLite database for storing codebase patterns and review history"""

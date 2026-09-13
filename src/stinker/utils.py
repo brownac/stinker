@@ -2,7 +2,7 @@ import hashlib
 import hmac
 from functools import wraps
 from flask import request, jsonify
-from kiss.config import Config
+from stinker.config import Config
 
 def verify_github_signature(payload_body, signature_header):
     """Verify that the webhook payload was sent from GitHub"""

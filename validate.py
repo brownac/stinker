@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 
-# Add src directory to Python path for kiss package imports
+# Add src directory to Python path for stinker package imports
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
 
 
@@ -15,14 +15,14 @@ def check_files():
     
     required_files = [
         'app.py',
-        'src/kiss/__init__.py',
-        'src/kiss/config.py',
-        'src/kiss/database.py',
-        'src/kiss/github_client.py',
-        'src/kiss/diff_parser.py',
-        'src/kiss/pattern_analyzer.py',
-        'src/kiss/ai_engine.py',
-        'src/kiss/utils.py',
+        'src/stinker/__init__.py',
+        'src/stinker/config.py',
+        'src/stinker/database.py',
+        'src/stinker/github_client.py',
+        'src/stinker/diff_parser.py',
+        'src/stinker/pattern_analyzer.py',
+        'src/stinker/ai_engine.py',
+        'src/stinker/utils.py',
         'requirements.txt',
         '.env',
         '.env.example',
@@ -53,7 +53,7 @@ def check_config():
     """Check configuration"""
     print("⚙️  Checking configuration...")
     
-    from kiss.config import Config
+    from stinker.config import Config
     
     checks = {
         'Flask Secret Key': Config.SECRET_KEY != 'dev-secret-key-change-in-production',
@@ -77,7 +77,7 @@ def check_database():
     """Check database"""
     print("💾 Checking database...")
     
-    from kiss.database import Database
+    from stinker.database import Database
     
     try:
         db = Database()
@@ -94,13 +94,13 @@ def check_modules():
     
     modules = [
         ('app', 'Flask application'),
-        ('kiss.config', 'Configuration'),
-        ('kiss.database', 'Database layer'),
-        ('kiss.github_client', 'GitHub client'),
-        ('kiss.diff_parser', 'Diff parser'),
-        ('kiss.pattern_analyzer', 'Pattern analyzer'),
-        ('kiss.ai_engine', 'AI engine'),
-        ('kiss.utils', 'Utilities')
+        ('stinker.config', 'Configuration'),
+        ('stinker.database', 'Database layer'),
+        ('stinker.github_client', 'GitHub client'),
+        ('stinker.diff_parser', 'Diff parser'),
+        ('stinker.pattern_analyzer', 'Pattern analyzer'),
+        ('stinker.ai_engine', 'AI engine'),
+        ('stinker.utils', 'Utilities')
     ]
     
     failed = []
