@@ -38,7 +38,10 @@ class Config:
     PATTERN_ANALYSIS_DEPTH = int(os.getenv('PATTERN_ANALYSIS_DEPTH', 100))  # files to scan
     
     # Database
-    DATABASE_PATH = os.getenv('DATABASE_PATH', 'patterns.db')
+    # Database - Turso (cloud) or SQLite (local)
+    TURSO_DATABASE_URL = os.getenv('TURSO_DATABASE_URL', '')
+    TURSO_AUTH_TOKEN = os.getenv('TURSO_AUTH_TOKEN', '')
+    DATABASE_PATH = os.getenv('DATABASE_PATH', 'patterns.db')  # Fallback for local dev
     
     @staticmethod
     def validate():
