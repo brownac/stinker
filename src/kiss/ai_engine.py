@@ -1,6 +1,6 @@
 import json
 import requests
-from config import Config
+from kiss.config import Config
 
 class AIEngine:
     """

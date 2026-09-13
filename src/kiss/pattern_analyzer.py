@@ -1,8 +1,8 @@
 import re
 from typing import List, Dict
 from collections import Counter
-from github_client import GitHubClient
-from config import Config
+from kiss.github_client import GitHubClient
+from kiss.config import Config
 
 class PatternAnalyzer:
     """Analyze codebase to learn patterns and conventions"""

@@ -1,13 +1,19 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import json
 import threading
-from config import Config
-from database import Database
-from github_client import GitHubClient
-from diff_parser import DiffParser
-from pattern_analyzer import PatternAnalyzer
-from ai_engine import AIEngine
-from utils import require_github_signature, format_error_response, format_success_response, validate_pr_number, validate_repo_name
+import sys
+import os
+
+# Add src directory to Python path for kiss package imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
+from kiss.config import Config
+from kiss.database import Database
+from kiss.github_client import GitHubClient
+from kiss.diff_parser import DiffParser
+from kiss.pattern_analyzer import PatternAnalyzer
+from kiss.ai_engine import AIEngine
+from kiss.utils import require_github_signature, format_error_response, format_success_response, validate_pr_number, validate_repo_name
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = Config.SECRET_KEY

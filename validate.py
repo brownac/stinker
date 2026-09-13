@@ -5,19 +5,24 @@ import os
 import sys
 from pathlib import Path
 
+# Add src directory to Python path for kiss package imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
+
+
 def check_files():
     """Check if all required files exist"""
     print("📁 Checking file structure...")
     
     required_files = [
         'app.py',
-        'config.py',
-        'database.py',
-        'github_client.py',
-        'diff_parser.py',
-        'pattern_analyzer.py',
-        'ai_engine.py',
-        'utils.py',
+        'src/kiss/__init__.py',
+        'src/kiss/config.py',
+        'src/kiss/database.py',
+        'src/kiss/github_client.py',
+        'src/kiss/diff_parser.py',
+        'src/kiss/pattern_analyzer.py',
+        'src/kiss/ai_engine.py',
+        'src/kiss/utils.py',
         'requirements.txt',
         '.env',
         '.env.example',
@@ -48,7 +53,7 @@ def check_config():
     """Check configuration"""
     print("⚙️  Checking configuration...")
     
-    from config import Config
+    from kiss.config import Config
     
     checks = {
         'Flask Secret Key': Config.SECRET_KEY != 'dev-secret-key-change-in-production',
@@ -72,7 +77,7 @@ def check_database():
     """Check database"""
     print("💾 Checking database...")
     
-    from database import Database
+    from kiss.database import Database
     
     try:
         db = Database()
@@ -89,13 +94,13 @@ def check_modules():
     
     modules = [
         ('app', 'Flask application'),
-        ('config', 'Configuration'),
-        ('database', 'Database layer'),
-        ('github_client', 'GitHub client'),
-        ('diff_parser', 'Diff parser'),
-        ('pattern_analyzer', 'Pattern analyzer'),
-        ('ai_engine', 'AI engine'),
-        ('utils', 'Utilities')
+        ('kiss.config', 'Configuration'),
+        ('kiss.database', 'Database layer'),
+        ('kiss.github_client', 'GitHub client'),
+        ('kiss.diff_parser', 'Diff parser'),
+        ('kiss.pattern_analyzer', 'Pattern analyzer'),
+        ('kiss.ai_engine', 'AI engine'),
+        ('kiss.utils', 'Utilities')
     ]
     
     failed = []

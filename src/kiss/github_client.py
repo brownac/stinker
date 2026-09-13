@@ -1,5 +1,5 @@
 from github import Github, GithubException
-from config import Config
+from kiss.config import Config
 import base64
 
 class GitHubClient:
