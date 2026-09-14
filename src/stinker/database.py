@@ -2,23 +2,38 @@ import json
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects import registry
+import libsql_experimental as libsql
+# Register libsql dialect manually
+registry.register("libsql", "sqlalchemy_libsql.libsql", "SQLiteDialect_libsql")
 from stinker.config import Config
 from stinker.models import Base, Pattern, Review, RepoConfig
 
 class Database:
     """SQLAlchemy ORM database for storing codebase patterns and review history"""
-    
     def __init__(self, db_path=None):
         # Determine database URL (Turso cloud or SQLite local)
         if Config.TURSO_DATABASE_URL and Config.TURSO_AUTH_TOKEN:
-            # Turso cloud database
-            database_url = f"sqlite+libsql://{Config.TURSO_DATABASE_URL}?authToken={Config.TURSO_AUTH_TOKEN}"
+            # Turso cloud database - use custom creator with https:// URL
+            turso_url = Config.TURSO_DATABASE_URL.replace('turso://', '').replace('libsql://', '')
+            turso_https_url = f"https://{turso_url}"
+            
+            # Custom creator function for Turso remote connection
+            def creator():
+                return libsql.connect(
+                    database=turso_https_url,
+                    auth_token=Config.TURSO_AUTH_TOKEN
+                )
+            
+            # Use sqlite dialect with custom creator (libsql is SQLite-compatible)
+            self.engine = create_engine("libsql:///:memory:", creator=creator, echo=False)
         else:
             # Local SQLite fallback
             self.db_path = db_path or Config.DATABASE_PATH
             database_url = f"sqlite:///{self.db_path}"
+            self.engine = create_engine(database_url, echo=False)
+            self.engine = create_engine(database_url, echo=False)
         
-        self.engine = create_engine(database_url, echo=False)
         self.SessionLocal = sessionmaker(bind=self.engine)
         self.init_db()
     
