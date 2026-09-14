@@ -74,37 +74,26 @@ A configurable, BYOK (Bring Your Own Key) AI-powered code review bot that analyz
 
 ### Installation
 
-1. **Clone or download the repository**
-```bash
-cd /path/to/ai-code-reviewer
-```
-
-2. **Run setup script**
+**Quick Start:**
 ```bash
 ./setup.sh
-```
-
-3. **Configure credentials**
-Edit `.env` file with your credentials:
-```bash
-nano .env
-```
-
-Required settings:
-- `GITHUB_TOKEN`: GitHub Personal Access Token with `repo` scope
-- `GITHUB_WEBHOOK_SECRET`: Random secret string for webhook verification
-- AI Provider credentials (choose one):
-  - `OPENAI_API_KEY` and `OPENAI_MODEL`
-  - `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`
-  - `CUSTOM_OPENAI_BASE_URL`, `CUSTOM_OPENAI_API_KEY`, and `CUSTOM_OPENAI_MODEL`
-
-4. **Start the application**
-```bash
+nano .env  # Configure credentials
 source venv/bin/activate
 python3 app.py
 ```
 
+**📖 For complete installation instructions, webhook setup, and troubleshooting:**
+See **[INSTALL.md](INSTALL.md)** for the detailed step-by-step guide.
+
+**Key Requirements:**
+- GitHub Personal Access Token with `repo` scope
+- Webhook secret for signature verification
+- AI provider API key (OpenAI/Anthropic/Custom)
+- Public URL for webhook delivery (ngrok/cloudflare tunnel/server)
+- Optional: Turso database for cloud persistence
+
 The dashboard will be available at `http://localhost:5000`
+
 
 ## Configuration
 
