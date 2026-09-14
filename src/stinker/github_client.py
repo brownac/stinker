@@ -1,16 +1,155 @@
-from github import Github, GithubException
+from github import Github, GithubException, GithubIntegration
 from stinker.config import Config
 import base64
+import jwt
+import time
+import requests
+from datetime import datetime, timedelta
+
+class GitHubAppAuth:
+    """GitHub App authentication helper"""
+    
+    def __init__(self):
+        self.app_id = Config.GITHUB_APP_ID
+        self.private_key = self._load_private_key()
+        self._token_cache = {}  # installation_id -> (token, expiry)
+    
+    def _load_private_key(self):
+        """Load private key from file or environment variable"""
+        if Config.GITHUB_APP_PRIVATE_KEY:
+            # Key provided as string in environment
+            return Config.GITHUB_APP_PRIVATE_KEY
+        elif Config.GITHUB_APP_PRIVATE_KEY_PATH:
+            # Load from file
+            try:
+                with open(Config.GITHUB_APP_PRIVATE_KEY_PATH, 'r') as f:
+                    return f.read()
+            except FileNotFoundError:
+                print(f"⚠️  Private key file not found: {Config.GITHUB_APP_PRIVATE_KEY_PATH}")
+                return None
+        return None
+    
+    def generate_jwt(self):
+        """Generate JWT for GitHub App authentication"""
+        if not self.private_key or not self.app_id:
+            return None
+        
+        # JWT expires after 10 minutes
+        now = int(time.time())
+        payload = {
+            'iat': now,
+            'exp': now + (10 * 60),
+            'iss': self.app_id
+        }
+        
+        try:
+            token = jwt.encode(payload, self.private_key, algorithm='RS256')
+            return token
+        except Exception as e:
+            print(f"Error generating JWT: {e}")
+            return None
+    
+    def get_installation_token(self, installation_id):
+        """Get installation access token (cached for 1 hour)"""
+        # Check cache
+        if installation_id in self._token_cache:
+            token, expiry = self._token_cache[installation_id]
+            if datetime.now() < expiry:
+                return token
+        
+        # Generate new token
+        jwt_token = self.generate_jwt()
+        if not jwt_token:
+            return None
+        
+        try:
+            headers = {
+                'Authorization': f'Bearer {jwt_token}',
+                'Accept': 'application/vnd.github.v3+json'
+            }
+            url = f'https://api.github.com/app/installations/{installation_id}/access_tokens'
+            response = requests.post(url, headers=headers)
+            
+            if response.status_code == 201:
+                data = response.json()
+                token = data['token']
+                # Cache for 50 minutes (tokens last 1 hour)
+                expiry = datetime.now() + timedelta(minutes=50)
+                self._token_cache[installation_id] = (token, expiry)
+                return token
+            else:
+                print(f"Error getting installation token: {response.status_code} - {response.text}")
+                return None
+        except Exception as e:
+            print(f"Error requesting installation token: {e}")
+            return None
+    
+    def get_installation_id_for_repo(self, repo_full_name):
+        """Get installation ID for a repository"""
+        jwt_token = self.generate_jwt()
+        if not jwt_token:
+            return None
+        
+        try:
+            headers = {
+                'Authorization': f'Bearer {jwt_token}',
+                'Accept': 'application/vnd.github.v3+json'
+            }
+            owner, repo = repo_full_name.split('/')
+            url = f'https://api.github.com/repos/{owner}/{repo}/installation'
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return data['id']
+            else:
+                print(f"Error getting installation: {response.status_code}")
+                return None
+        except Exception as e:
+            print(f"Error fetching installation ID: {e}")
+            return None
+
 
 class GitHubClient:
     """GitHub API client for PR and repository interactions"""
     
-    def __init__(self, token=None):
-        self.token = token or Config.GITHUB_TOKEN
-        self.client = Github(self.token)
+    def __init__(self, token=None, installation_id=None):
+        """
+        Initialize GitHub client with either:
+        - token: Personal Access Token (legacy mode)
+        - installation_id: GitHub App installation ID
+        """
+        self.use_app = Config.USE_GITHUB_APP
+        self.app_auth = GitHubAppAuth() if self.use_app else None
+        self.installation_id = installation_id
+        
+        if self.use_app and installation_id:
+            # GitHub App mode
+            token = self.app_auth.get_installation_token(installation_id)
+            if not token:
+                print("⚠️  Failed to get installation token, falling back to PAT")
+                token = Config.GITHUB_TOKEN
+        else:
+            # Legacy PAT mode
+            token = token or Config.GITHUB_TOKEN
+        
+        self.token = token
+        self.client = Github(token) if token else None
+    
+    def get_client_for_repo(self, repo_full_name):
+        """Get authenticated client for a specific repository"""
+        if self.use_app:
+            installation_id = self.app_auth.get_installation_id_for_repo(repo_full_name)
+            if installation_id:
+                return GitHubClient(installation_id=installation_id)
+        return self
     
     def get_repository(self, repo_full_name):
         """Get repository object"""
+        if not self.client:
+            print("No GitHub client available")
+            return None
+        
         try:
             return self.client.get_repo(repo_full_name)
         except GithubException as e:
@@ -60,7 +199,6 @@ class GitHubClient:
             # Get the diff using the API
             diff_url = pr.diff_url
             headers = {'Accept': 'application/vnd.github.v3.diff'}
-            import requests
             response = requests.get(diff_url, headers=headers)
             return response.text if response.status_code == 200 else None
         except Exception as e:

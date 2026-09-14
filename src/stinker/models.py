@@ -60,3 +60,27 @@ class RepoConfig(Base):
     
     def __repr__(self):
         return f"<RepoConfig(repo={self.repo_full_name})>"
+
+
+class Installation(Base):
+    """Stores GitHub App installation information"""
+    __tablename__ = 'installations'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    installation_id = Column(Integer, nullable=False, unique=True, index=True)
+    account_id = Column(Integer, nullable=False)
+    account_login = Column(String(255), nullable=False)
+    account_type = Column(String(50), nullable=False)  # 'User' or 'Organization'
+    target_type = Column(String(50), nullable=False)  # 'User' or 'Organization'
+    repository_selection = Column(String(50), nullable=False)  # 'all' or 'selected'
+    repositories = Column(Text, nullable=True)  # JSON string of repo names
+    permissions = Column(Text, nullable=True)  # JSON string of permissions
+    event_types = Column('events', Text, nullable=True)  # JSON string of subscribed events (mapped to avoid SQLAlchemy keyword)
+    suspended_at = Column(DateTime, nullable=True)  # When suspended
+    suspended_by = Column(String(255), nullable=True)  # Who suspended
+    suspended = Column(Integer, default=0)  # 0=active, 1=suspended
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    def __repr__(self):
+        return f"<Installation(id={self.installation_id}, account={self.account_login}, type={self.account_type})>"

@@ -58,11 +58,152 @@ def webhook():
     if event_type == 'pull_request':
         return handle_pull_request(payload)
     
+    
+    # Handle GitHub App installation events
+    elif event_type == 'installation':
+        return handle_installation(payload)
+    
+    elif event_type == 'installation_repositories':
+        return handle_installation_repositories(payload)
     # Handle ping event (webhook test)
     elif event_type == 'ping':
         return jsonify({'message': 'Pong! Webhook is configured correctly'}), 200
     
     return jsonify({'message': f'Event {event_type} received but not processed'}), 200
+
+
+def handle_installation(payload):
+    """Handle GitHub App installation events (created, deleted, suspend, unsuspend)"""
+    action = payload.get('action')
+    installation = payload.get('installation', {})
+    
+    installation_id = installation.get('id')
+    account = installation.get('account', {})
+    
+    logger.info(f"Installation event: action={action}, installation_id={installation_id}, account={account.get('login')}")
+    
+    if action == 'created':
+        # New installation - save to database
+        installation_data = {
+            'installation_id': installation_id,
+            'account_id': account.get('id'),
+            'account_login': account.get('login'),
+            'account_type': account.get('type'),
+            'target_type': installation.get('target_type'),
+            'repository_selection': installation.get('repository_selection', 'all'),
+            'repositories': [repo.get('full_name') for repo in installation.get('repositories', [])],
+            'permissions': installation.get('permissions', {}),
+            'events': installation.get('events', [])
+        }
+        
+        try:
+            db.save_installation(installation_data)
+            logger.info(f"Saved installation {installation_id} for {account.get('login')}")
+            return jsonify({'message': 'Installation created successfully'}), 201
+        except Exception as e:
+            logger.error(f"Failed to save installation: {str(e)}")
+            return format_error_response(f'Failed to save installation: {str(e)}')
+    
+    elif action == 'deleted':
+        # Installation removed - delete from database
+        try:
+            db.delete_installation(installation_id)
+            logger.info(f"Deleted installation {installation_id}")
+            return jsonify({'message': 'Installation deleted successfully'}), 200
+        except Exception as e:
+            logger.error(f"Failed to delete installation: {str(e)}")
+            return format_error_response(f'Failed to delete installation: {str(e)}')
+    
+    elif action == 'suspend':
+        # Installation suspended
+        installation_data = {
+            'installation_id': installation_id,
+            'account_id': account.get('id'),
+            'account_login': account.get('login'),
+            'account_type': account.get('type'),
+            'target_type': installation.get('target_type'),
+            'suspended_at': datetime.utcnow(),
+            'suspended_by': payload.get('sender', {}).get('login')
+        }
+        
+        try:
+            db.save_installation(installation_data)
+            logger.info(f"Suspended installation {installation_id}")
+            return jsonify({'message': 'Installation suspended'}), 200
+        except Exception as e:
+            logger.error(f"Failed to suspend installation: {str(e)}")
+            return format_error_response(f'Failed to suspend installation: {str(e)}')
+    
+    elif action == 'unsuspend':
+        # Installation unsuspended
+        installation_data = {
+            'installation_id': installation_id,
+            'account_id': account.get('id'),
+            'account_login': account.get('login'),
+            'account_type': account.get('type'),
+            'target_type': installation.get('target_type'),
+            'suspended_at': None,
+            'suspended_by': None
+        }
+        
+        try:
+            db.save_installation(installation_data)
+            logger.info(f"Unsuspended installation {installation_id}")
+            return jsonify({'message': 'Installation unsuspended'}), 200
+        except Exception as e:
+            logger.error(f"Failed to unsuspend installation: {str(e)}")
+            return format_error_response(f'Failed to unsuspend installation: {str(e)}')
+    
+    return jsonify({'message': f'Installation action {action} received'}), 200
+
+def handle_installation_repositories(payload):
+    """Handle installation_repositories events (added, removed)"""
+    action = payload.get('action')
+    installation = payload.get('installation', {})
+    installation_id = installation.get('id')
+    
+    repositories_added = [repo.get('full_name') for repo in payload.get('repositories_added', [])]
+    repositories_removed = [repo.get('full_name') for repo in payload.get('repositories_removed', [])]
+    
+    logger.info(f"Installation repositories event: action={action}, installation_id={installation_id}")
+    logger.info(f"Added: {repositories_added}, Removed: {repositories_removed}")
+    
+    try:
+        # Get current installation
+        current_installation = db.get_installation(installation_id)
+        if not current_installation:
+            logger.error(f"Installation {installation_id} not found")
+            return format_error_response('Installation not found')
+        
+        current_repos = set(current_installation.get('repositories', []))
+        
+        # Update repository list
+        if action == 'added':
+            current_repos.update(repositories_added)
+        elif action == 'removed':
+            current_repos.difference_update(repositories_removed)
+        
+        # Save updated installation
+        account = installation.get('account', {})
+        installation_data = {
+            'installation_id': installation_id,
+            'account_id': account.get('id'),
+            'account_login': account.get('login'),
+            'account_type': account.get('type'),
+            'target_type': installation.get('target_type'),
+            'repository_selection': installation.get('repository_selection', 'selected'),
+            'repositories': list(current_repos),
+            'permissions': installation.get('permissions', {}),
+            'events': installation.get('events', [])
+        }
+        
+        db.save_installation(installation_data)
+        logger.info(f"Updated repositories for installation {installation_id}")
+        return jsonify({'message': 'Installation repositories updated'}), 200
+        
+    except Exception as e:
+        logger.error(f"Failed to update installation repositories: {str(e)}")
+        return format_error_response(f'Failed to update installation repositories: {str(e)}')
 
 def handle_pull_request(payload):
     """Handle pull request webhook event"""
@@ -74,19 +215,21 @@ def handle_pull_request(payload):
     
     pr = payload.get('pull_request', {})
     repo = payload.get('repository', {})
+    installation = payload.get('installation', {})
     
     repo_full_name = repo.get('full_name')
     pr_number = pr.get('number')
+    installation_id = installation.get('id')
     
     if not repo_full_name or not pr_number:
         return format_error_response('Invalid payload structure')
     
-    print(f"📝 Processing PR #{pr_number} from {repo_full_name}")
+    print(f"📝 Processing PR #{pr_number} from {repo_full_name} (installation: {installation_id})")
     
     # Process in background thread to avoid webhook timeout
     thread = threading.Thread(
         target=process_pr_review,
-        args=(repo_full_name, pr_number)
+        args=(repo_full_name, pr_number, installation_id)
     )
     thread.start()
     
@@ -95,7 +238,7 @@ def handle_pull_request(payload):
         'status': 'processing'
     }), 202
 
-def process_pr_review(repo_full_name, pr_number):
+def process_pr_review(repo_full_name, pr_number, installation_id=None):
     """Process PR review (called in background thread)"""
     try:
         print(f"🔍 Starting review for {repo_full_name} PR #{pr_number}")
@@ -113,7 +256,7 @@ def process_pr_review(repo_full_name, pr_number):
         
         # 2. Get PR diff
         print(f"📥 Fetching PR diff...")
-        pr_files = github_client.get_pr_files(repo_full_name, pr_number)
+        pr_files = github_client.get_pr_files(repo_full_name, pr_number, installation_id=installation_id)
         
         if not pr_files:
             print(f"⚠️  No files found in PR #{pr_number}")
@@ -148,7 +291,7 @@ def process_pr_review(repo_full_name, pr_number):
         comment_body = ai_engine.format_review_comment(review_result)
         
         print(f"💬 Posting review comment...")
-        success = github_client.post_review_comment(repo_full_name, pr_number, comment_body)
+        success = github_client.post_review_comment(repo_full_name, pr_number, comment_body, installation_id=installation_id)
         
         if success:
             print(f"✅ Review posted successfully for PR #{pr_number}")
@@ -177,6 +320,7 @@ def manual_review():
     
     repo_full_name = data.get('repo')
     pr_number = data.get('pr_number')
+    installation_id = data.get('installation_id')  # Optional for GitHub App mode
     
     if not validate_repo_name(repo_full_name):
         return format_error_response('Invalid repository name format. Use: owner/repo')
@@ -187,7 +331,7 @@ def manual_review():
     # Start review in background
     thread = threading.Thread(
         target=process_pr_review,
-        args=(repo_full_name, int(pr_number))
+        args=(repo_full_name, int(pr_number), installation_id)
     )
     thread.start()
     

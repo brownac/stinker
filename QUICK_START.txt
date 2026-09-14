@@ -1,0 +1,220 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  STINKER - AI CODE REVIEW BOT                              ║
+║                    Quick Installation Summary                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+✅ STATUS: Turso Migration Complete | Documentation Added | Ready to Install
+
+📍 REPOSITORY: git@github.com:brownac/stinker.git
+
+
+═══════════════════════════════════════════════════════════════════════════
+  1. INSTALLATION OVERVIEW
+═══════════════════════════════════════════════════════════════════════════
+
+This bot connects to GitHub repositories via:
+  → GitHub Personal Access Token (for API access)
+  → Webhook (for receiving PR events)
+  → Your AI provider (OpenAI/Anthropic/Custom)
+  → Turso or SQLite database (for pattern storage)
+
+
+═══════════════════════════════════════════════════════════════════════════
+  2. PRE-FLIGHT CHECKLIST
+═══════════════════════════════════════════════════════════════════════════
+
+BEFORE installing, ensure you have:
+
+  [✓] GitHub Personal Access Token with 'repo' scope
+      → Create at: https://github.com/settings/tokens/new
+
+  [✓] Webhook Secret (generate with):
+      → python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+
+  [✓] AI Provider API Key (one of):
+      → OpenAI: https://platform.openai.com/api-keys
+      → Anthropic: https://console.anthropic.com/
+      → Custom: Your OpenAI-compatible endpoint
+
+  [✓] Public URL for webhooks (one of):
+      → ngrok: https://ngrok.com (free, regenerates on restart)
+      → Cloudflare Tunnel: https://developers.cloudflare.com/cloudflare-one/
+      → Production server with reverse proxy
+
+  [⚬] Optional: Turso database (cloud persistence)
+      → Create at: https://turso.tech (free tier available)
+
+
+═══════════════════════════════════════════════════════════════════════════
+  3. INSTALLATION STEPS (5 MINUTES)
+═══════════════════════════════════════════════════════════════════════════
+
+Step 1: Setup Application
+────────────────────────────────────────────────────────────────────────────
+cd /home/nonbios/ai-code-reviewer
+./setup.sh
+source venv/bin/activate
+
+
+Step 2: Configure Credentials
+────────────────────────────────────────────────────────────────────────────
+nano .env
+
+Required changes:
+  SECRET_KEY=<generate: python3 -c "import secrets; print(secrets.token_hex(32))">
+  GITHUB_TOKEN=ghp_your_actual_token_here
+  GITHUB_WEBHOOK_SECRET=<generate: python3 -c "import secrets; print(secrets.token_urlsafe(32))">
+  
+Choose ONE AI provider:
+  OPENAI_API_KEY=sk-your-key
+  # OR
+  ANTHROPIC_API_KEY=sk-ant-your-key
+  # OR
+  CUSTOM_AI_ENDPOINT=https://your-endpoint.com/v1/chat/completions
+
+Optional Turso (cloud database):
+  TURSO_DATABASE_URL=libsql://your-database.turso.io
+  TURSO_AUTH_TOKEN=eyJhbGc...
+
+
+Step 3: Expose Application to Internet
+────────────────────────────────────────────────────────────────────────────
+Option A - ngrok (Quick test):
+  ngrok http 5000
+  # Copy the https URL (e.g., https://abc123.ngrok.io)
+
+Option B - Cloudflare Tunnel (Persistent):
+  cloudflared tunnel create stinker
+  cloudflared tunnel run stinker --url http://localhost:5000
+  # Configure DNS: stinker.yourdomain.com
+
+Option C - Production Server:
+  # Configure nginx/Apache reverse proxy with SSL
+
+
+Step 4: Start Application
+────────────────────────────────────────────────────────────────────────────
+python3 app.py
+
+Expected output:
+  🚀 AI Code Review Bot Starting...
+  📊 Using Turso database: libsql://...turso.io
+  * Running on http://0.0.0.0:5000
+
+
+Step 5: Configure GitHub Webhook
+────────────────────────────────────────────────────────────────────────────
+1. Go to: https://github.com/owner/repo/settings/hooks
+2. Click "Add webhook"
+3. Configure:
+   
+   Payload URL:    https://your-public-url.com/webhook
+   Content type:   application/json
+   Secret:         <paste GITHUB_WEBHOOK_SECRET from .env>
+   Events:         ☑ Pull requests only
+   Active:         ☑ Checked
+
+4. Click "Add webhook"
+5. Verify green checkmark appears
+
+
+Step 6: Test with a Pull Request
+────────────────────────────────────────────────────────────────────────────
+1. Create a branch and make a code change
+2. Open a pull request
+3. Bot should automatically:
+   → Analyze the PR diff
+   → Learn repository patterns
+   → Post review comment with suggestions
+
+Check Flask logs for:
+  📝 Processing PR #123 from owner/repo
+  🔍 Analyzing 5 changed files
+  🤖 Generating AI review...
+  ✅ Posted review comment
+
+
+═══════════════════════════════════════════════════════════════════════════
+  4. VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════════════════
+
+After installation, verify:
+
+  [_] Dashboard accessible at http://localhost:5000
+  [_] All configuration settings show green in /config page
+  [_] Webhook shows green checkmark in GitHub
+  [_] Test PR receives automated review comment
+  [_] Review appears in dashboard under "Recent Reviews"
+  [_] Database stores patterns (check /repos page)
+
+
+═══════════════════════════════════════════════════════════════════════════
+  5. TROUBLESHOOTING QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════════
+
+Webhook not receiving events:
+  → Check GitHub webhook "Recent Deliveries" for errors
+  → Verify public URL is accessible: curl https://your-url.com/webhook
+  → Confirm Flask app is running and listening on correct port
+
+Authentication errors:
+  → Test GitHub token: curl -H "Authorization: token $GITHUB_TOKEN" \
+                             https://api.github.com/user
+  → Verify token has 'repo' scope
+
+AI provider errors:
+  → Test OpenAI key: curl https://api.openai.com/v1/models \
+                          -H "Authorization: Bearer $OPENAI_API_KEY"
+  → Check API quota and rate limits
+
+Database connection:
+  → SQLite: Check patterns.db file exists and is writable
+  → Turso: Verify URL format is libsql:// (not https:// or turso://)
+  → Test Turso token: turso db show <database-name> --token
+
+
+═══════════════════════════════════════════════════════════════════════════
+  6. COMPLETE DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+📖 Full installation guide:    INSTALL.md (461 lines)
+📖 README with architecture:   README.md
+📖 API documentation:          See README.md "API Endpoints" section
+📖 Database schema:            See README.md "Database Schema" section
+
+
+═══════════════════════════════════════════════════════════════════════════
+  7. PRODUCTION DEPLOYMENT
+═══════════════════════════════════════════════════════════════════════════
+
+For production use:
+
+  → Use systemd service (see INSTALL.md)
+  → Configure nginx reverse proxy with SSL
+  → Enable log rotation
+  → Set up monitoring and alerting
+  → Use Turso for cloud persistence
+  → Rotate credentials regularly
+  → Review security best practices in INSTALL.md
+
+
+═══════════════════════════════════════════════════════════════════════════
+  8. SUPPORT & NEXT STEPS
+═══════════════════════════════════════════════════════════════════════════
+
+Repository: https://github.com/brownac/stinker
+Issues:     https://github.com/brownac/stinker/issues
+
+After successful installation:
+  1. Review learned patterns via dashboard
+  2. Configure per-repository settings
+  3. Adjust AI models based on cost/quality
+  4. Monitor review quality and iterate
+  5. Scale to multiple repositories
+
+
+════════════════════════════════════════════════════════════════════════════
+
+🎉 Ready to install! Start with Step 1 above or read INSTALL.md for details.
+
+════════════════════════════════════════════════════════════════════════════

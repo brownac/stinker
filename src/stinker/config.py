@@ -11,9 +11,20 @@ class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     PORT = int(os.getenv('PORT', 5000))
     
-    # GitHub
+    # GitHub - App Authentication (Primary)
+    GITHUB_APP_ID = os.getenv('GITHUB_APP_ID')
+    GITHUB_APP_PRIVATE_KEY_PATH = os.getenv('GITHUB_APP_PRIVATE_KEY_PATH')
+    GITHUB_APP_PRIVATE_KEY = os.getenv('GITHUB_APP_PRIVATE_KEY')  # Alternative: key as string
+    GITHUB_APP_WEBHOOK_SECRET = os.getenv('GITHUB_APP_WEBHOOK_SECRET')
+    GITHUB_APP_CLIENT_ID = os.getenv('GITHUB_APP_CLIENT_ID')
+    GITHUB_APP_CLIENT_SECRET = os.getenv('GITHUB_APP_CLIENT_SECRET')
+    
+    # GitHub - Legacy PAT (Deprecated, for backward compatibility)
     GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
     GITHUB_WEBHOOK_SECRET = os.getenv('GITHUB_WEBHOOK_SECRET')
+    
+    # Determine authentication mode
+    USE_GITHUB_APP = bool(GITHUB_APP_ID and (GITHUB_APP_PRIVATE_KEY_PATH or GITHUB_APP_PRIVATE_KEY))
     
     # AI Provider Configuration
     AI_PROVIDER = os.getenv('AI_PROVIDER', 'openai')  # openai, anthropic, custom
@@ -48,8 +59,16 @@ class Config:
         """Validate required configuration"""
         errors = []
         
-        if not Config.GITHUB_TOKEN:
-            errors.append("GITHUB_TOKEN is required")
+        # GitHub Authentication - App or PAT required
+        if Config.USE_GITHUB_APP:
+            if not Config.GITHUB_APP_ID:
+                errors.append("GITHUB_APP_ID is required when using GitHub App")
+            if not (Config.GITHUB_APP_PRIVATE_KEY_PATH or Config.GITHUB_APP_PRIVATE_KEY):
+                errors.append("GITHUB_APP_PRIVATE_KEY_PATH or GITHUB_APP_PRIVATE_KEY is required")
+            if not Config.GITHUB_APP_WEBHOOK_SECRET:
+                errors.append("GITHUB_APP_WEBHOOK_SECRET is required")
+        elif not Config.GITHUB_TOKEN:
+            errors.append("Either GitHub App credentials or GITHUB_TOKEN (PAT) is required")
         
         if Config.AI_PROVIDER == 'openai' and not Config.OPENAI_API_KEY:
             errors.append("OPENAI_API_KEY is required when using OpenAI")

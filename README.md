@@ -111,6 +111,28 @@ GITHUB_TOKEN=ghp_your_token_here
 GITHUB_WEBHOOK_SECRET=your-webhook-secret
 ```
 
+**GitHub App (Recommended for production):**
+
+See [GITHUB_APP_SETUP.md](GITHUB_APP_SETUP.md) for detailed setup instructions.
+
+```bash
+USE_GITHUB_APP=true
+GITHUB_APP_ID=123456
+GITHUB_APP_PRIVATE_KEY_PATH=private-key.pem
+GITHUB_APP_WEBHOOK_SECRET=your-app-webhook-secret
+GITHUB_APP_CLIENT_ID=Iv1.your-client-id
+GITHUB_APP_CLIENT_SECRET=your-client-secret
+```
+
+> **Note:** GitHub App authentication is recommended over Personal Access Tokens as it provides:
+> - Fine-grained repository access control
+> - Installation-scoped permissions
+> - Better security with short-lived tokens
+> - No user account dependency
+> - Automatic token rotation
+
+For backward compatibility, PAT authentication is still supported. The bot will automatically use GitHub App authentication if `USE_GITHUB_APP=true` is set, otherwise it falls back to `GITHUB_TOKEN`.
+
 **AI Provider (Choose one):**
 
 OpenAI:
